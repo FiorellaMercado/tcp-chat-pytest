@@ -43,13 +43,20 @@ def broadcast(mensaje, cliente_emisor):
                 cliente.send(mensaje.encode('utf-8'))  #PERMITE ENVIAR ESTE MENSAJE A LOS DEMÁS CLIENTES 
 
 # conf del server
-servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-servidor.bind((HOST,PORT))  # RECIBO EN ESTA DIRECCION
-servidor.listen() #MOD ESCUCHA
-print(f"Servidor escuchando en {HOST}:{PORT}")
+def crear_servidor(host=HOST, port=PORT):
+    servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    servidor.bind((host, port))  # RECIBO EN ESTA DIRECCION
+    servidor.listen()  # MOD ESCUCHA
+    print(f"Servidor escuchando en {host}:{port}")
+    return servidor
 
-#loop 
-while True:
-    socket_cliente, direccion = servidor.accept() #ATIENDE AL CLIENTE
-    hilo =  threading.Thread(target=manejar_cliente,args=(socket_cliente,direccion))
-    hilo.start()
+#loop
+def aceptar_clientes(servidor):
+    while True:
+        socket_cliente, direccion = servidor.accept()  # ATIENDE AL CLIENTE
+        hilo = threading.Thread(target=manejar_cliente, args=(socket_cliente, direccion))
+        hilo.start()
+
+if __name__ == "__main__":
+    servidor = crear_servidor()
+    aceptar_clientes(servidor)
