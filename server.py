@@ -21,9 +21,12 @@ def manejar_cliente(socket_cliente,direccion):
             if not mensaje:
                 print(f"Cliente {direccion} desconectado")
                 break
-        
-            print(f"Recibido de {direccion}: {mensaje}")
-            broadcast(mensaje, socket_cliente)
+
+            if mensaje.strip()=="" or len(mensaje)>200:
+                socket_cliente.send("Mensaje inválido".encode('utf-8'))
+            else:
+                print(f"Recibido de {direccion}: {mensaje}")
+                broadcast(mensaje, socket_cliente)
         except ConnectionResetError:
             print(f"cliente {direccion} se desconectó abruptamente")
             break
