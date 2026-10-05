@@ -90,3 +90,60 @@ def test_tres_clientes(crear_socket):
     a.settimeout(0.3)
     with pytest.raises(socket.timeout):
         a.recv(1024)
+
+def test_orenados_duplicados(crear_socket):
+    a=crear_socket()
+    b=crear_socket()
+
+    espera(2, 2)
+
+
+    mensajes=["uno","dos","tres"]
+    for mensaje in mensajes:
+        a.send(mensaje.encode('utf-8'))
+   
+
+    bytes_acuculados=recibir_hasta(b,len("unodostres"),2)
+
+    assert bytes_acuculados.decode('utf-8') == "unodostres"
+
+    #duplicados
+    b.settimeout(0.3)
+    with pytest.raises(socket.timeout):
+        b.recv(1024)
+
+    a.settimeout(0.3)
+    with pytest.raises(socket.timeout):
+        a.recv(1024)
+    
+    
+
+
+
+
+def recibir_hasta(sock, cantidad_bytes, tiempo_max):
+    bytes_acumulados=b""
+    inicio=time.time()
+    while len(bytes_acumulados)<cantidad_bytes:
+
+        tiempo_restante=tiempo_max-(time.time()-inicio)
+
+        if tiempo_restante <= 0: 
+            pytest.fail(f"Tiempo agotado. Bytes recibido {bytes_acumulados}")
+
+        sock.settimeout(tiempo_restante)
+
+        try:
+            recibido = sock.recv(1024) # 4. recv dentro del try
+        except socket.timeout:
+            pytest.fail(f"Tiempo agotado. Bytes recibido {bytes_acumulados}")
+
+        
+        if not recibido:
+            pytest.fail(f"el servidor cerró la conexión, bytes recibido hasta ahora {bytes_acumulados}")
+        bytes_acumulados=bytes_acumulados+recibido
+        
+    
+    return bytes_acumulados
+
+    
