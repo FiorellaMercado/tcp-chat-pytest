@@ -22,11 +22,14 @@ def manejar_cliente(socket_cliente,direccion):
                 print(f"Cliente {direccion} desconectado")
                 break
 
-            if mensaje.strip()=="" or len(mensaje)>200:
+            mensaje_valido=validar_mensaje(mensaje)
+            if mensaje_valido is None:
                 socket_cliente.send("Mensaje inválido".encode('utf-8'))
-            else:
-                print(f"Recibido de {direccion}: {mensaje}")
-                broadcast(mensaje, socket_cliente)
+                continue
+
+            print(f"Recibido de {direccion}: {mensaje_valido}")
+            broadcast(mensaje_valido, socket_cliente)
+
         except ConnectionResetError:
             print(f"cliente {direccion} se desconectó abruptamente")
             break
@@ -59,6 +62,15 @@ def aceptar_clientes(servidor):
         socket_cliente, direccion = servidor.accept()  # ATIENDE AL CLIENTE
         hilo = threading.Thread(target=manejar_cliente, args=(socket_cliente, direccion))
         hilo.start()
+
+#validacion de mensaje
+limite=200
+def validar_mensaje(mensaje):
+    mensaje=mensaje.strip()
+    if mensaje=="" or len(mensaje)>limite:
+        return None
+    return mensaje
+
 
 if __name__ == "__main__":
     servidor = crear_servidor()
