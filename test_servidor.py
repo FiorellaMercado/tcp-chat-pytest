@@ -67,4 +67,53 @@ def test_manejar_clientes():
     assert emisor.cerrado
 
 
+@pytest.mark.parametrize("mensaje",[(b" "), 
+                                    (b"\t"),
+                                    (b"x" * 201)])
+def test_servidor_invalida_mensajes(mensaje):
+    emisor=SocketFalso()
+    receptor=SocketFalso()
 
+    server.clientes_conectados.append(receptor)
+    emisor.por_recibir.append(mensaje)
+
+    server.manejar_cliente(emisor,("127.0.0.1", 5000))
+
+    assert len(receptor.enviados)==0
+
+  
+
+
+@pytest.mark.parametrize("mensaje",[(b" "), 
+                                    (b"\t"),
+                                    (b"x" * 201)])
+                                    #(b"<script>const elemento=document.getElementById('miTexto');const mensaje='Texto cambiado con JavaScript!';const mensajeLargo='Este es un mensaje adicional para aumentar la cantidad de caracteres del script y comprobar correctamente el comportamiento del servidor cuando recibe contenido de mayor longitud.';elemento.textContent=mensaje+' '+mensajeLargo;</script>")])
+#es mejor probar con b"x" * 201 ya que no asegura que falla por la longitud y no por simbolos, ademas no permite probrar el limite, el primer y ulitmo valido
+def test_servidor_avisa_mensajes_invalidos(mensaje):
+    emisor=SocketFalso()
+    receptor=SocketFalso()
+
+    server.clientes_conectados.append(receptor)
+    emisor.por_recibir.append(mensaje)
+
+    server.manejar_cliente(emisor,("127.0.0.1", 5000))
+
+    recibido = b"".join(emisor.enviados).decode("utf-8")
+
+    assert "inválido" in recibido
+
+# test positivo
+@pytest.mark.parametrize("mensaje",[(b"Hola" ), 
+                                    (b"<b>hola</b>"),
+                                    (b"x" * 200)])
+def test_servidor_valida_mensajes(mensaje):
+    emisor=SocketFalso()
+    receptor=SocketFalso()
+
+    server.clientes_conectados.append(receptor)
+    emisor.por_recibir.append(mensaje)
+
+    server.manejar_cliente(emisor,("127.0.0.1", 5000))
+
+    assert receptor.enviados == [mensaje]
+    assert emisor.enviados == [] #prever que al emisor no le llegue es mensaje de error
