@@ -146,4 +146,82 @@ def recibir_hasta(sock, cantidad_bytes, tiempo_max):
     
     return bytes_acumulados
 
+
     
+def test_simultaneo(crear_socket):
+    evento = threading.Event()
+
+    a=crear_socket()
+    b=crear_socket()
+    c=crear_socket()
+
+    #b receptor
+    espera(3,2)
+
+    #mensajes
+    lista_a=["un","dos","tres"]
+    lista_b=["a","b","C"]
+
+    def enviar(lista, sock):
+        for item in lista:
+            evento.wait()
+            sock.send(item.encode('utf-8'))
+
+    hilo_a=threading.Thread(target=enviar,args=(lista_a,a))
+    hilo_b=threading.Thread(target=enviar,args=(lista_b,b))
+
+    
+    hilo_a.start()
+    hilo_b.start()
+    evento.set()         
+    hilo_a.join(timeout=2)
+    hilo_b.join(timeout=2)
+
+
+
+    bytes_a="".join(lista_a)
+    bytes_b="".join(lista_b)
+    letras_a = set(bytes_a)
+    letras_b = set(bytes_b)
+
+    total_bytes=len(bytes_a)+len(bytes_b)
+
+    bytes_acumulados_c=recibir_hasta(c,total_bytes,2)
+
+    bytes_acumulados_a=recibir_hasta(a,len(bytes_b),2)
+    bytes_acumulados_b=recibir_hasta(b,len(bytes_a),2)
+
+    
+    texto_c = bytes_acumulados_c.decode('utf-8') 
+
+    # los conjuntos no pueden compartir letras, si no el filtro se rompe
+    assert letras_a.isdisjoint(letras_b)
+
+    solo_a = ""
+    solo_b = ""
+    for caracter in texto_c:
+        if caracter in letras_a:
+            solo_a += caracter
+        elif caracter in letras_b:
+            solo_b += caracter
+
+            
+
+    assert solo_a == bytes_a
+    assert solo_b == bytes_b
+
+    assert bytes_acumulados_a.decode('utf-8') == bytes_b
+    assert bytes_acumulados_b.decode('utf-8') == bytes_a
+
+    #duplicados
+    c.settimeout(0.3)
+    with pytest.raises(socket.timeout):
+        c.recv(1024)
+
+    b.settimeout(0.3)
+    with pytest.raises(socket.timeout):
+        b.recv(1024)
+
+    a.settimeout(0.3)
+    with pytest.raises(socket.timeout):
+        a.recv(1024)
