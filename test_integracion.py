@@ -92,7 +92,7 @@ def test_tres_clientes(crear_socket):
     with pytest.raises(socket.timeout):
         a.recv(1024)
 
-def test_orenados_duplicados(crear_socket):
+def test_ordenados_duplicados(crear_socket):
     a=crear_socket()
     b=crear_socket()
 
@@ -231,7 +231,7 @@ def cerrar_abruptamente(sock):
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack('ii', 1, 0))
     sock.close()
 
-#test_servidor_sigue_funcionando_si_un_cliente_se_cae_abruptamente
+#test servidor sigue funcionando si un cliente se cae abruptamente
 def test_SO_LINGER(crear_socket):
     a=crear_socket()
     b=crear_socket()
