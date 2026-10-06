@@ -4,6 +4,7 @@ import server
 import threading
 import socket
 import time
+import struct
 
 @pytest.fixture(autouse=True)
 def limpiar_lista_conectados():
@@ -225,3 +226,78 @@ def test_simultaneo(crear_socket):
     a.settimeout(0.3)
     with pytest.raises(socket.timeout):
         a.recv(1024)
+
+def cerrar_abruptamente(sock):
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack('ii', 1, 0))
+    sock.close()
+
+#test_servidor_sigue_funcionando_si_un_cliente_se_cae_abruptamente
+def test_SO_LINGER(crear_socket):
+    a=crear_socket()
+    b=crear_socket()
+    c=crear_socket()
+
+    espera(3,2)
+
+    cerrar_abruptamente(b)
+
+    a.send("hola".encode('utf-8'))
+
+    c.settimeout(2)
+    mensaje=c.recv(1024).decode('utf-8')
+
+    assert mensaje == "hola"
+
+    espera(2, 2)
+
+    d=crear_socket()
+
+    espera(3, 2)
+
+    a.send("hola de nuevo".encode('utf-8'))
+
+    d.settimeout(2)
+    mensaje2=d.recv(1024).decode('utf-8')
+
+    assert mensaje2 == "hola de nuevo"
+
+@pytest.mark.parametrize("caidos", [1, 2])
+def test_SO_LINGER_varios_clientes(crear_socket, caidos):
+    clientes=[]
+    for i in range(4):
+        clientes.append(crear_socket())
+
+    
+
+    emisor=clientes[0]
+    receptores=clientes[1:]
+
+    caen=receptores[0:caidos]
+    vivos=receptores[caidos:]
+
+    espera(4, 2)
+
+    for sock in caen:
+        cerrar_abruptamente(sock)
+
+    emisor.send("hola".encode('utf-8'))
+
+    for sock in vivos:
+        sock.settimeout(2)
+        mensaje=sock.recv(1024).decode('utf-8')
+        assert mensaje == "hola"
+    
+    espera(4-caidos,2)
+
+
+    d=crear_socket()
+
+    espera(4 - caidos + 1, 2)
+
+    emisor.send("hola de nuevo".encode('utf-8'))
+
+    d.settimeout(2)
+    mensaje2=d.recv(1024).decode('utf-8')
+
+    assert mensaje2 == "hola de nuevo"
+
