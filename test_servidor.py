@@ -3,12 +3,16 @@ import server
 
 class SocketFalso:
     def __init__(self):
+        self.falla_al_enviar=False #para probar desconexion abrupta
         self.enviados= [] #lo que el servidor envio a este cliente
         self.por_recibir = []  # lo que "escribe" este cliente
         self.cerrado=False
 
     def send(self,datos):
-        self.enviados.append(datos)
+        if self.falla_al_enviar==True:
+            raise ConnectionResetError
+        else:
+            self.enviados.append(datos)
 
     def recv(self,tam):
         if not self.por_recibir:
@@ -117,3 +121,20 @@ def test_servidor_valida_mensajes(mensaje):
 
     assert receptor.enviados == [mensaje]
     assert emisor.enviados == [] #prever que al emisor no le llegue es mensaje de error
+
+def test_desconexion_abrupta():
+    socket1=SocketFalso()
+    socket2=SocketFalso()
+    socket3=SocketFalso()
+    emisor=SocketFalso()
+
+    socket1.falla_al_enviar=True
+
+    server.clientes_conectados.extend([socket1,socket2,socket3,emisor])
+
+    server.broadcast("hola",emisor)
+
+    assert socket2.enviados == [b"hola"]
+    assert socket3.enviados == [b"hola"]
+    assert len(emisor.enviados) == 0
+    assert socket1 not in server.clientes_conectados
