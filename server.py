@@ -53,7 +53,7 @@ def broadcast(mensaje, cliente_emisor):
                 except ConnectionError:
                     sockets_muertos.append(cliente)
         for sock in sockets_muertos:
-            clientes_conectados.remove(sock)
+            clientes_conectados.remove(sock) #
 
 # conf del server
 def crear_servidor(host=HOST, port=PORT):
