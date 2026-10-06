@@ -62,3 +62,39 @@ Todos pasan. Resultado: 9 passed
 
 
 **Commit:** `a8e6bdf` refactor: extract message validation and max length constant (TDD refactor)
+
+
+# TDD: desconexiones abruptas
+
+## Broadcast con un socket muerto
+### RED
+**Commit:** `7c727c1` 
+
+test: add test for broadcast with a dead client (TDD red)
+
+
+### GREEN
+**Commit:** `e07e292` 
+
+feat: handle dead sockets in broadcast (TDD green)
+
+## Desconexiones abruptas, manejo de errores
+
+### RED
+**Commit:** `9b6c3a9` 
+
+test: add tests for abrupt disconnection errors in manejar_cliente (TDD red)
+
+ 
+### GREEN
+**Commit:** `5925a9d` 
+
+fix: handle all connection errors and always clean up in manejar_cliente
+
+### REFACTOR
+
+**Commit:** `69765f2` 
+
+
+refactor: simplify error handling in manejar_cliente
+
