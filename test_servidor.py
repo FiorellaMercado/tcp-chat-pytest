@@ -142,6 +142,17 @@ def test_broadcast_descarta_cliente_muerto():
     assert len(emisor.enviados) == 0
     assert socket1 not in server.clientes_conectados
 
+#validar_mensaje
+@pytest.mark.parametrize("mensaje,resultado",[(" hola ","hola"), 
+                                    ("",None),
+                                    ("  ", None),
+                                    ("x" * 201,None),
+                                    ("x" * 200,"x" * 200)])
+def test_probar_funcion_validar_mensaje(mensaje,resultado):
+    respuesta=server.validar_mensaje(mensaje)
+    assert respuesta== resultado
+# bytes que no son utf por_recibir=[b"\xff"] ver
+
 #fallos por desconexion abrupta
 @pytest.mark.parametrize("error",[ConnectionResetError,
                                    ConnectionAbortedError,
