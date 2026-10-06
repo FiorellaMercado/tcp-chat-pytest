@@ -3,6 +3,7 @@ import server
 
 class SocketFalso:
     def __init__(self):
+        self.recv_error=None
         self.falla_al_enviar=False #para probar desconexion abrupta
         self.enviados= [] #lo que el servidor envio a este cliente
         self.por_recibir = []  # lo que "escribe" este cliente
@@ -15,6 +16,8 @@ class SocketFalso:
             self.enviados.append(datos)
 
     def recv(self,tam):
+        if self.recv_error is not None:
+            raise self.recv_error
         if not self.por_recibir:
             return b""
         elemento=self.por_recibir.pop(0)
@@ -122,7 +125,7 @@ def test_servidor_valida_mensajes(mensaje):
     assert receptor.enviados == [mensaje]
     assert emisor.enviados == [] #prever que al emisor no le llegue es mensaje de error
 
-def test_desconexion_abrupta():
+def test_broadcast_descarta_cliente_muerto():
     socket1=SocketFalso()
     socket2=SocketFalso()
     socket3=SocketFalso()
@@ -138,3 +141,19 @@ def test_desconexion_abrupta():
     assert socket3.enviados == [b"hola"]
     assert len(emisor.enviados) == 0
     assert socket1 not in server.clientes_conectados
+
+
+@pytest.mark.parametrize("error",[ConnectionResetError,
+                                   ConnectionAbortedError,
+                                   BrokenPipeError])
+def test_error_recv(error):
+    emisor=SocketFalso()
+    emisor.recv_error=error
+    receptor=SocketFalso()
+
+    server.clientes_conectados.append(receptor)
+    server.manejar_cliente(emisor,("localhost",0))
+
+    assert emisor not in server.clientes_conectados
+    assert emisor.cerrado
+    assert receptor in server.clientes_conectados
