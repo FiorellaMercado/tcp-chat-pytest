@@ -44,9 +44,16 @@ def manejar_cliente(socket_cliente,direccion):
 
 def broadcast(mensaje, cliente_emisor):
     with clientes_lock:
+        #agregado para manejar desconexiones abruptas
+        sockets_muertos=[]
         for cliente in clientes_conectados:
             if cliente != cliente_emisor:
-                cliente.send(mensaje.encode('utf-8'))  #PERMITE ENVIAR ESTE MENSAJE A LOS DEMÁS CLIENTES 
+                try:
+                    cliente.send(mensaje.encode('utf-8'))  #PERMITE ENVIAR ESTE MENSAJE A LOS DEMÁS CLIENTES 
+                except ConnectionError:
+                    sockets_muertos.append(cliente)
+        for sock in sockets_muertos:
+            clientes_conectados.remove(sock)
 
 # conf del server
 def crear_servidor(host=HOST, port=PORT):
