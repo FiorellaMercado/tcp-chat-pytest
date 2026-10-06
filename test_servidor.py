@@ -142,7 +142,7 @@ def test_broadcast_descarta_cliente_muerto():
     assert len(emisor.enviados) == 0
     assert socket1 not in server.clientes_conectados
 
-
+#fallos por desconexion abrupta
 @pytest.mark.parametrize("error",[ConnectionResetError,
                                    ConnectionAbortedError,
                                    BrokenPipeError])
@@ -157,3 +157,14 @@ def test_error_recv(error):
     assert emisor not in server.clientes_conectados
     assert emisor.cerrado
     assert receptor in server.clientes_conectados
+
+def test_varios_mensajes():
+    emisor=SocketFalso()
+    receptor=SocketFalso()
+
+    server.clientes_conectados.append(receptor)
+    emisor.por_recibir=[b"uno",b"dos"]
+    server.manejar_cliente(emisor,("localhost",0))
+
+    assert receptor.enviados == [b"uno",b"dos"]
+    assert len(emisor.enviados) == 0
