@@ -13,33 +13,35 @@ def manejar_cliente(socket_cliente,direccion):
     with clientes_lock:
         clientes_conectados.append(socket_cliente)
         print(f"Clientes conectados ahora: {len(clientes_conectados)}")
+    try: #agregado para manejar errores 
+        while True:
+            try:
 
-    while True:
-        try:
+                mensaje = socket_cliente.recv(1024).decode('utf-8')
+                if not mensaje:
+                    print(f"Cliente {direccion} desconectado")
+                    break
 
-            mensaje = socket_cliente.recv(1024).decode('utf-8')
-            if not mensaje:
-                print(f"Cliente {direccion} desconectado")
+                mensaje_valido=validar_mensaje(mensaje)
+                if mensaje_valido is None:
+                    socket_cliente.send("Mensaje inválido".encode('utf-8'))
+                    continue
+
+                print(f"Recibido de {direccion}: {mensaje_valido}")
+                broadcast(mensaje_valido, socket_cliente)
+
+            except ConnectionResetError:
+                print(f"cliente {direccion} se desconectó abruptamente")
                 break
-
-            mensaje_valido=validar_mensaje(mensaje)
-            if mensaje_valido is None:
-                socket_cliente.send("Mensaje inválido".encode('utf-8'))
-                continue
-
-            print(f"Recibido de {direccion}: {mensaje_valido}")
-            broadcast(mensaje_valido, socket_cliente)
-
-        except ConnectionResetError:
-            print(f"cliente {direccion} se desconectó abruptamente")
-            break
-
-    with clientes_lock:
-        if socket_cliente in clientes_conectados:
-            clientes_conectados.remove(socket_cliente)
-        print(f"Clientes conectados ahora: {len(clientes_conectados)}")
-    
-    socket_cliente.close()
+    except ConnectionError:
+        print("Se desconecto abruptamente")
+    finally:
+        with clientes_lock:
+            if socket_cliente in clientes_conectados:
+                clientes_conectados.remove(socket_cliente)
+            print(f"Clientes conectados ahora: {len(clientes_conectados)}")
+        
+        socket_cliente.close()
 
 
 def broadcast(mensaje, cliente_emisor):
