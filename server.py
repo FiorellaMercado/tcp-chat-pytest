@@ -15,26 +15,23 @@ def manejar_cliente(socket_cliente,direccion):
         print(f"Clientes conectados ahora: {len(clientes_conectados)}")
     try: #agregado para manejar errores 
         while True:
-            try:
+            
 
-                mensaje = socket_cliente.recv(1024).decode('utf-8')
-                if not mensaje:
-                    print(f"Cliente {direccion} desconectado")
-                    break
-
-                mensaje_valido=validar_mensaje(mensaje)
-                if mensaje_valido is None:
-                    socket_cliente.send("Mensaje inválido".encode('utf-8'))
-                    continue
-
-                print(f"Recibido de {direccion}: {mensaje_valido}")
-                broadcast(mensaje_valido, socket_cliente)
-
-            except ConnectionResetError:
-                print(f"cliente {direccion} se desconectó abruptamente")
+            mensaje = socket_cliente.recv(1024).decode('utf-8')
+            if not mensaje:
+                print(f"Cliente {direccion} desconectado")
                 break
+
+            mensaje_valido=validar_mensaje(mensaje)
+            if mensaje_valido is None:
+                socket_cliente.send("Mensaje inválido".encode('utf-8'))
+                continue
+
+            print(f"Recibido de {direccion}: {mensaje_valido}")
+            broadcast(mensaje_valido, socket_cliente)
+
     except ConnectionError:
-        print("Se desconecto abruptamente")
+        print(f"cliente {direccion} se desconectó abruptamente")
     finally:
         with clientes_lock:
             if socket_cliente in clientes_conectados:
